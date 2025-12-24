@@ -4,6 +4,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { CartProvider } from './context/CartContext';
+import { Provider } from 'react-redux';
+import { store } from './store/store';
 import './global.css';
 
 // Screens
@@ -58,10 +60,12 @@ function TabNavigator() {
 /* -------- App -------- */
 export default function App() {
   return (
-    <CartProvider>
-      <NavigationContainer>
-        <TabNavigator />
-      </NavigationContainer>
-    </CartProvider>
+    <Provider store={store}>
+      <CartProvider>
+        <NavigationContainer>
+          <TabNavigator />
+        </NavigationContainer>
+      </CartProvider>
+    </Provider>
   );
 }
