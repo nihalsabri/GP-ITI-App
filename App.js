@@ -4,70 +4,111 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { CartProvider } from './context/CartContext';
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 import { store } from './store/store';
+
 import './global.css';
 
 // Screens
 import Home from './screens/Home';
 import About from './screens/ِAbout';
 import Contact from './screens/Contact';
-import Tradespeople from 'screens/Tradespeople';
-import Tradesperson from 'screens/Tradesperson';
+import Tradespeople from './screens/Tradespeople';
+import Tradesperson from './screens/Tradesperson';
+import Login from './screens/Login';
+import Register from './screens/Register';
+import Profile from './screens/Profile';
+import Dashboard from './screens/Dashboard';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-/* -------- Home Stack -------- */
+/* ================= HOME STACK ================= */
 function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={Home} />
       <Stack.Screen name="About" component={About} />
-      <Stack.Screen name="Contact" component={Contact} />
       <Stack.Screen name="Tradespeople" component={Tradespeople} />
       <Stack.Screen name="Tradesperson" component={Tradesperson} />
     </Stack.Navigator>
   );
 }
 
-/* -------- Profile Stack -------- */
+/* ================= DASHBOARD STACK ================= */
+function DashboardStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Dashboard" component={Dashboard} />
+    </Stack.Navigator>
+  );
+}
 
-/* -------- Bottom Tabs -------- */
+/* ================= PROFILE STACK ================= */
+const ProfileStackNav = createNativeStackNavigator();
+
+function ProfileStack() {
+  return (
+    <ProfileStackNav.Navigator screenOptions={{ headerShown: false }}>
+      <ProfileStackNav.Screen name="Login" component={Login} />
+      <ProfileStackNav.Screen name="Register" component={Register} />
+      <ProfileStackNav.Screen name="Profile" component={Profile} />
+    </ProfileStackNav.Navigator>
+  );
+}
+
+/* ================= TABS ================= */
 function TabNavigator() {
+  const role = useSelector((state) => state.app.role);
+  const isAuthenticated = useSelector((state) => state.app.isAuthenticated);
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: 'orange',
-        tabBarInactiveTintColor: '#9ca3af',
-        tabBarStyle: {
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
         tabBarIcon: ({ color, size }) => {
-          let icon;
+          let icon = 'home-outline';
+
           if (route.name === 'HomeTab') icon = 'home-outline';
-          if (route.name === 'AboutTab') icon = 'information-circle-outline';
+          if (route.name === 'TradespeopleTab') icon = 'people-outline';
+          if (route.name === 'DashboardTab') icon = 'speedometer-outline';
+          if (route.name === 'ProfileTab') icon = 'person-outline';
           if (route.name === 'ContactTab') icon = 'call-outline';
-          if (route.name === 'TradespeopleTab') icon = 'accessibility-outline';
+
           return <Ionicons name={icon} size={size} color={color} />;
         },
       })}>
+      {/* HOME */}
       <Tab.Screen name="HomeTab" component={HomeStack} options={{ tabBarLabel: 'Home' }} />
-      <Tab.Screen name="AboutTab" component={About} options={{ tabBarLabel: 'About' }} />
+
+      {/* CLIENT ONLY */}
+      {isAuthenticated && role === 'client' && (
+        <Tab.Screen
+          name="TradespeopleTab"
+          component={Tradespeople}
+          options={{ tabBarLabel: 'Tradespeople' }}
+        />
+      )}
+
+      {/* TRADESPERSON ONLY */}
+      {isAuthenticated && role === 'tradesperson' && (
+        <Tab.Screen
+          name="DashboardTab"
+          component={DashboardStack}
+          options={{ tabBarLabel: 'Dashboard' }}
+        />
+      )}
+
+      {/* PROFILE */}
+      <Tab.Screen name="ProfileTab" component={ProfileStack} options={{ tabBarLabel: 'Profile' }} />
+
+      {/* CONTACT */}
       <Tab.Screen name="ContactTab" component={Contact} options={{ tabBarLabel: 'Contact' }} />
-      <Tab.Screen
-        name="TradespeopleTab"
-        component={Tradespeople}
-        options={{ tabBarLabel: 'Tradespeople' }}
-      />
     </Tab.Navigator>
   );
 }
 
-/* -------- App -------- */
+/* ================= APP ================= */
 export default function App() {
   return (
     <Provider store={store}>
