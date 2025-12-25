@@ -12,6 +12,7 @@ import './global.css';
 import Home from './screens/Home';
 import About from './screens/ِAbout';
 import Contact from './screens/Contact';
+import Tradespeople from 'screens/Tradespeople';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -23,6 +24,7 @@ function HomeStack() {
       <Stack.Screen name="Home" component={Home} />
       <Stack.Screen name="About" component={About} />
       <Stack.Screen name="Contact" component={Contact} />
+      <Stack.Screen name="Tradespeople" component={Tradespeople} />
     </Stack.Navigator>
   );
 }
@@ -47,12 +49,18 @@ function TabNavigator() {
           if (route.name === 'HomeTab') icon = 'home-outline';
           if (route.name === 'AboutTab') icon = 'information-circle-outline';
           if (route.name === 'ContactTab') icon = 'call-outline';
+          if (route.name === 'TradespeopleTab') icon = 'call-outline';
           return <Ionicons name={icon} size={size} color={color} />;
         },
       })}>
       <Tab.Screen name="HomeTab" component={HomeStack} options={{ tabBarLabel: 'Home' }} />
       <Tab.Screen name="AboutTab" component={About} options={{ tabBarLabel: 'About' }} />
       <Tab.Screen name="ContactTab" component={Contact} options={{ tabBarLabel: 'Contact' }} />
+      <Tab.Screen
+        name="TradespeopleTab"
+        component={Tradespeople}
+        options={{ tabBarLabel: 'Tradespeople' }}
+      />
     </Tab.Navigator>
   );
 }
