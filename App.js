@@ -13,6 +13,7 @@ import Home from './screens/Home';
 import About from './screens/ِAbout';
 import Contact from './screens/Contact';
 import Tradespeople from 'screens/Tradespeople';
+import Tradesperson from 'screens/Tradesperson';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -25,6 +26,7 @@ function HomeStack() {
       <Stack.Screen name="About" component={About} />
       <Stack.Screen name="Contact" component={Contact} />
       <Stack.Screen name="Tradespeople" component={Tradespeople} />
+      <Stack.Screen name="Tradesperson" component={Tradesperson} />
     </Stack.Navigator>
   );
 }
