@@ -49,7 +49,12 @@ const Tradespeople = () => {
   /* ================= RENDER CARD ================= */
   const renderItem = ({ item }) => (
     <TouchableOpacity
-      onPress={() => navigation.navigate('Tradesperson', { id: item.id })}
+      onPress={() =>
+        navigation.navigate('HomeTab', {
+          screen: 'Tradesperson',
+          params: { id: item.id },
+        })
+      }
       className="mb-4 rounded-2xl bg-white p-4 shadow">
       <View className="flex-row items-center gap-4">
         {/* Image */}
