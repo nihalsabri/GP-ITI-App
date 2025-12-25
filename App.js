@@ -51,7 +51,7 @@ function TabNavigator() {
           if (route.name === 'HomeTab') icon = 'home-outline';
           if (route.name === 'AboutTab') icon = 'information-circle-outline';
           if (route.name === 'ContactTab') icon = 'call-outline';
-          if (route.name === 'TradespeopleTab') icon = 'call-outline';
+          if (route.name === 'TradespeopleTab') icon = 'accessibility-outline';
           return <Ionicons name={icon} size={size} color={color} />;
         },
       })}>
