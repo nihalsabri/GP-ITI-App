@@ -1,20 +1,11 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 import { ref, set, get } from 'firebase/database';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, database } from './firebaseConfig';
 
 /* ======================================================
-   HELPERS
-====================================================== */
-
-const getCollectionByRole = (role) => {
-  if (role === 'client') return 'clients';
-  if (role === 'tradesperson') return 'Tradespeople';
-  throw new Error('Invalid role');
-};
-
-/* ======================================================
-   REGISTER (CLIENT OR TRADESPERSON)
+   REGISTER (ROLE IS REQUIRED HERE)
 ====================================================== */
 
 export const registerUser = async ({
@@ -28,74 +19,76 @@ export const registerUser = async ({
       throw new Error('Missing required register data');
     }
 
-    const collection = getCollectionByRole(role);
+    const collection = role === 'client' ? 'clients' : 'Tradespeople';
 
-    // 1️⃣ Create Auth user
     const res = await createUserWithEmailAndPassword(auth, String(email), String(password));
 
     const uid = res.user.uid;
 
-    // 2️⃣ Save profile in Realtime DB
-    await set(ref(database, `${collection}/${uid}`), {
+    const profile = {
       id: uid,
       email,
       role,
       createdAt: new Date().toISOString(),
       ...profileData,
-    });
-
-    return {
-      uid,
-      email,
-      role,
     };
+
+    await set(ref(database, `${collection}/${uid}`), profile);
+
+    return profile;
   } catch (err) {
-    console.error('registerUser error:', err.code, err.message);
+    console.error('registerUser error:', err.message);
     throw err;
   }
 };
 
 /* ======================================================
-   LOGIN (CLIENT OR TRADESPERSON)
+   LOGIN (ROLE IS AUTO-DETECTED)
 ====================================================== */
 
-export const loginUser = async ({
-  email,
-  password,
-  role, // "client" | "tradesperson"
-}) => {
+export const loginUser = async ({ email, password }) => {
   try {
-    if (!email || !password || !role) {
+    if (!email || !password) {
       throw new Error('Missing login data');
     }
 
-    const collection = getCollectionByRole(role);
-
-    // 1️⃣ Firebase Auth login
+    // 1️⃣ Firebase Auth
     const res = await signInWithEmailAndPassword(auth, String(email), String(password));
 
     const uid = res.user.uid;
 
-    // 2️⃣ Get profile from correct collection
-    const snap = await get(ref(database, `${collection}/${uid}`));
+    // 2️⃣ Check CLIENT
+    const clientSnap = await get(ref(database, `clients/${uid}`));
 
-    if (!snap.exists()) {
-      throw new Error('Profile not found for this role');
+    if (clientSnap.exists()) {
+      const token = await res.user.getIdToken();
+      const profile = clientSnap.val();
+
+      await AsyncStorage.setItem('token', token);
+      await AsyncStorage.setItem('role', 'client');
+      await AsyncStorage.setItem('user', JSON.stringify(profile));
+
+      return { profile, role: 'client', token };
     }
 
-    const profile = snap.val();
+    // 3️⃣ Check TRADESPERSON
+    const tradesSnap = await get(ref(database, `Tradespeople/${uid}`));
 
-    // 3️⃣ Get token (useful later for APIs)
-    const token = await res.user.getIdToken();
+    if (tradesSnap.exists()) {
+      const token = await res.user.getIdToken();
+      const profile = tradesSnap.val();
 
-    return {
-      authResult: res,
-      profile,
-      token,
-      role,
-    };
+      await AsyncStorage.setItem('token', token);
+      await AsyncStorage.setItem('role', 'tradesperson');
+      await AsyncStorage.setItem('user', JSON.stringify(profile));
+
+      return { profile, role: 'tradesperson', token };
+    }
+
+    // 4️⃣ No profile found
+    throw new Error('User profile not found');
   } catch (err) {
-    console.error('loginUser error:', err.code, err.message);
+    console.error('loginUser error:', err.message);
     throw err;
   }
 };
@@ -106,9 +99,10 @@ export const loginUser = async ({
 
 export const logoutUser = async () => {
   try {
+    await AsyncStorage.multiRemove(['token', 'role', 'user']);
     await signOut(auth);
   } catch (err) {
-    console.error('logoutUser error:', err.code, err.message);
+    console.error('logoutUser error:', err.message);
     throw err;
   }
 };
