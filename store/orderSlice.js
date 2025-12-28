@@ -12,14 +12,14 @@ const orderSlice = createSlice({
   reducers: {
     // =====================
     // CLIENT
-    // =====================
+
     setClient: (state, action) => {
       state.client = action.payload;
     },
 
     // =====================
     // TRADESPERSON
-    // =====================
+
     setTradesperson: (state, action) => {
       const incoming = action.payload;
 
@@ -33,7 +33,7 @@ const orderSlice = createSlice({
 
     // =====================
     // SERVICES
-    // =====================
+
     addService: (state, action) => {
       const exists = state.services.find((s) => s.id === action.payload.id);
 
@@ -51,7 +51,7 @@ const orderSlice = createSlice({
 
     // =====================
     // CLEAR ORDER
-    // =====================
+
     clearOrder: () => initialState,
   },
 });
