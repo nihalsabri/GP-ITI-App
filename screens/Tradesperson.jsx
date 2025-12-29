@@ -8,11 +8,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { get, ref, update } from 'firebase/database';
 import { database } from '../services/firebaseConfig';
 import { setTradesperson, addService } from '../store/orderSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import store from 'store/store';
 
 /* ================= MAPS ================= */
 
@@ -27,7 +29,7 @@ const Tradesperson = () => {
   const { id } = route.params;
 
   const dispatch = useDispatch();
-
+//  const navigation = useNavigation();
   const [person, setPerson] = useState(null);
   const [services, setServices] = useState([]);
   const [rating, setRating] = useState(0);
@@ -89,16 +91,31 @@ const Tradesperson = () => {
   };
 
   /* ================= ADD SERVICE ================= */
+  // const handleAddService = (service) => {
+  //   dispatch(
+  //     addService({
+  //       id: service.id || `special-${id}`,
+  //       name: service.name,
+  //       price: service.price,
+  //       category: service.category,
+  //     })
+  //   );
+  // };
   const handleAddService = (service) => {
-    dispatch(
-      addService({
-        id: service.id || `special-${id}`,
-        name: service.name,
-        price: service.price,
-        category: service.category,
-      })
-    );
-  };
+  dispatch(
+    addService({
+      id: service.id || `special-${id}`,
+      name: service.name,
+      price: service.price,
+      category: service.category,
+    })
+  )
+
+  setTimeout(async () => {
+    const currentState = store.getState().order;
+    await AsyncStorage.setItem('currentOrder', JSON.stringify(currentState));
+  }, 100);
+};
 
   /* ================= GUARDS ================= */
   if (loading) {
@@ -163,6 +180,8 @@ const Tradesperson = () => {
               }>
               <Text style={styles.addBtnText}>Add to Order</Text>
             </TouchableOpacity>
+
+            
           </View>
         )}
 
@@ -178,6 +197,9 @@ const Tradesperson = () => {
             </TouchableOpacity>
           </View>
         ))}
+        {/* <TouchableOpacity onPress={() => navigation.navigate('Checkout')}>
+  <Text>View Cart ({services.length})</Text>
+</TouchableOpacity> */}
       </View>
     </ScrollView>
   );

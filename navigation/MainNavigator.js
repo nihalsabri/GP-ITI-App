@@ -14,7 +14,7 @@ import Register from '../screens/Register';
 import Profile from '../screens/Profile';
 import TechnicianDashboard from '../screens/Dashboard';
 import LoadingScreen from '../components/LoadingScreen';
-
+import CheckoutScreen from '../screens/Checkout';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -27,6 +27,7 @@ function HomeStack() {
       <Stack.Screen name="HomeMain" component={Home} />
       <Stack.Screen name="Tradespeople" component={Tradespeople} />
       <Stack.Screen name="Tradesperson" component={Tradesperson} />
+ <Stack.Screen name="Checkout" component={CheckoutScreen} /> 
     </Stack.Navigator>
   );
 }
@@ -84,6 +85,8 @@ function ClientTabs() {
             iconName = focused ? 'person' : 'person-outline';
           } else if (route.name === 'ContactTab') {
             iconName = focused ? 'call' : 'call-outline';
+          } else if (route.name === 'CheckoutTab') {
+            iconName = focused ? 'cart' : 'cart-outline';
           }
           
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -119,7 +122,11 @@ function ClientTabs() {
         component={ProfileStack} 
         options={{ tabBarLabel: 'حسابي' }} 
       />
-      
+      <Tab.Screen
+      name="CheckoutTab"
+      component={CheckoutScreen}
+      options={{ tabBarLabel: 'الدفع' }}
+      />
       <Tab.Screen 
         name="ContactTab" 
         component={Contact} 

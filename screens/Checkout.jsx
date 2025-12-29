@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,10 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { clearOrder } from '../store/orderSlice';
+import { clearOrder ,setTradesperson, addService } from '../store/orderSlice';
 import { useNavigation } from '@react-navigation/native';
-
-
-
-import { useStripe, CardField, StripeProvider } from '@stripe/stripe-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useStripe, StripeProvider } from '@stripe/stripe-react-native';
 
 const CheckoutForm = () => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
@@ -94,17 +92,49 @@ const CheckoutForm = () => {
 };
 
 const CheckoutScreen = () => {
+const dispatch = useDispatch();
+    const [loading, setLoading] = useState(false);
 
-  const { services, tradesperson } = useSelector((state) => state.order);
+const order = useSelector((state) => state.order);
+const services = order?.services || [];
+const tradesperson = order?.tradesperson || { name: 'Loading...' };
 
-  if (!tradesperson || services.length === 0) {
+
+  useEffect(() => {
+    const loadSavedOrder = async () => {
+      try {
+        const saved = await AsyncStorage.getItem('currentOrder');
+        if (saved) {
+          const order = JSON.parse(saved);
+          if (order.tradesperson) {
+            dispatch(setTradesperson(order.tradesperson));
+          }
+          if (order.services && order.services.length > 0) {
+            order.services.forEach((service) => dispatch(addService(service)));
+          }
+        }
+      } catch (error) {
+        console.log('Failed to load saved order', error);
+      }
+    };
+
+    loadSavedOrder();
+  }, [dispatch]);
+   if (loading) {
     return (
       <View style={styles.center}>
-        <Text>No services selected</Text>
+        <ActivityIndicator size="large" color="#372B70" />
       </View>
     );
   }
-
+  if (services.length === 0) {
+  return (
+    <View style={styles.center}>
+      <Text>No services selected</Text>
+    </View>
+  );
+}
+  
   const total = services.reduce((sum, s) => sum + (s.price || 0), 0);
 
   return (
