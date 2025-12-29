@@ -13,6 +13,8 @@ import { clearOrder ,setTradesperson, addService } from '../store/orderSlice';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useStripe, StripeProvider } from '@stripe/stripe-react-native';
+import { ref, set } from 'firebase/database';
+import { database } from '../services/firebaseConfig';
 
 const CheckoutForm = () => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
@@ -24,6 +26,9 @@ const CheckoutForm = () => {
   const { services } = useSelector((state) => state.order);
   const total = services.reduce((sum, s) => sum + (s.price || 0), 0);
   const totalInCents = Math.round(total * 100); 
+
+   const user = useSelector((state) => state.app.user);
+  const tradesperson = useSelector((state) => state.order.tradesperson);
 
   const handlePayment = async () => {
     setLoading(true);
@@ -57,14 +62,37 @@ const CheckoutForm = () => {
 
     
       const { error } = await presentPaymentSheet();
+const orderData = {
+   id: orderId, 
+    clientId: user.uid || user.id,
+    clientName: user.name || user.displayName,
+    clientPhone: user.phone,
+    clientAddress: user.address,
+    technicianId: tradesperson.id,
+      tradespersonid: tradesperson.id, 
+    technicianName: tradesperson.name,
+     services: services,
+  serviceType: services.map(s => s.name).join(', '), 
+
+    total: total,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+  };
+  const orderId = Date.now();
 
       if (error) {
         Alert.alert('Payment Failed', error.message);
       } else {
+      
+        await set(ref(database, `orders/${orderId}`), orderData);
+        await set(ref(database, `Tradespeople/${tradesperson.id}/orders/${orderId}`), orderData);
+
         Alert.alert('Success', 'Payment successful!');
         dispatch(clearOrder());
+        await AsyncStorage.removeItem('currentOrder');
         navigation.navigate('Home');
       }
+       
     } catch (err) {
       Alert.alert('Error', err.message || 'Something went wrong');
     } finally {

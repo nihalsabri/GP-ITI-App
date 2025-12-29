@@ -185,17 +185,19 @@ export default function TechnicianDashboard() {
           {getStatusBadge(order.status)}
         </View>
 
-        {/* Order ID */}
         <View className="mb-2">
-          <Text className="text-xs text-gray-500">رقم الطلب: {displayId}</Text>
-        </View>
+  <Text className="text-xs text-gray-500">
+    رقم الطلب: {order.id || order.orderId || 'غير محدد'}
+  </Text>
+</View>
 
-        {/* Service Type */}
-        <View className="mb-3">
-          <Text className="mb-1 text-sm font-semibold text-gray-600">نوع الخدمة:</Text>
-          <Text className="text-sm text-gray-700">{order.serviceType || 'خدمة غير محددة'}</Text>
-        </View>
-
+{/* Service Type */}
+<View className="mb-3">
+  <Text className="mb-1 text-sm font-semibold text-gray-600">الخدمة:</Text>
+  <Text className="text-sm text-gray-700">
+    {order.serviceType || order.services?.map(s => s.name).join(', ') || 'خدمة غير محددة'}
+  </Text>
+</View>
         {/* Date */}
         {order.date && (
           <View className="mb-3">
@@ -214,7 +216,7 @@ export default function TechnicianDashboard() {
           </View>
           <View className="flex-row items-center">
             <MapPin size={16} color="#6b7280" />
-            <Text className="mr-2 text-sm text-gray-700">{order.address || 'غير متوفر'}</Text>
+            <Text className="mr-2 text-sm text-gray-700">{order.address || order.clientAddress || 'غير متوفر'}</Text>
           </View>
         </View>
 

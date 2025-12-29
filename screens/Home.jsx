@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react-native';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function Home() {
@@ -166,6 +166,8 @@ export default function Home() {
   );
 
   return (
+
+
     <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
       {/* Hero Section */}
       <View className="px-4 py-12 md:py-16">
@@ -407,5 +409,6 @@ export default function Home() {
         </View>
       </View>
     </ScrollView>
+   
   );
 }

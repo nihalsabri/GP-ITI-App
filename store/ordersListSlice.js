@@ -51,19 +51,11 @@ export const fetchTechnicianOrders = createAsyncThunk(
 
           return processedOrder;
         })
-        .filter((order) => {
-
-          //  استخدام tradespersonid (lowercase) كما في Firebase
-          const isMatch = order.tradespersonid === tradespersonId;
-          if (isMatch) {
-            console.log(` Found order:`, {
-              firebaseKey: order.orderId,
-              internalId: order.internalId,
-              tradespersonid: order.tradespersonid,
-            });
-          }
-          return isMatch;
-        });
+     .filter((order) => {
+  const isMatch = (order.tradespersonid === tradespersonId) || 
+                  (order.technicianId === tradespersonId); 
+  return isMatch;
+});
 
       return technicianOrders;
     } catch (error) {

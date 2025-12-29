@@ -75,7 +75,7 @@ const Contact = () => {
       <View style={styles.infoBox}>
         <Text style={styles.infoLabel}>أو تواصل معنا عبر:</Text>
         <Text style={styles.infoText}> 0123-456-789</Text>
-        <Text style={styles.infoText}>✉️ support@gp-iti.com</Text>
+        <Text style={styles.infoText}> support@gp-iti.com</Text>
       </View>
     </ScrollView>
   );

@@ -22,7 +22,9 @@ export default function Register({ navigation }) {
   // ==========================================
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState('client');
-
+const [specialName, setSpecialName] = useState('');
+const [specialDesc, setSpecialDesc] = useState('');
+const [specialPrice, setSpecialPrice] = useState('');
   // Common fields
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -127,7 +129,16 @@ export default function Register({ navigation }) {
         userData.areas = [area1.trim(), area2.trim(), area3.trim()].filter(Boolean);
         userData.phone = phone.trim() || '';
         userData.address = address.trim() || '';
+
+         if (specialName.trim() && specialPrice) {
+    userData.specialService = {
+      id: `special-${Date.now()}`,
+      name: specialName.trim(),
+      description: specialDesc.trim(),
+      price: Number(specialPrice),
+    };
       }
+    }
 
       console.log('📤 Registering user:', userData.email);
 
@@ -372,13 +383,7 @@ export default function Register({ navigation }) {
                   <Picker.Item label="اختر التخصص" value="" />
                   <Picker.Item label="سباك" value="plumber" />
                   <Picker.Item label="كهربائي" value="electrician" />
-                  <Picker.Item label="نجار" value="carpenter" />
-                  <Picker.Item label="دهان" value="painter" />
-                  <Picker.Item label="ميكانيكي" value="mechanic" />
-                  <Picker.Item label="تكييف وتبريد" value="ac-technician" />
-                  <Picker.Item label="بناء" value="builder" />
-                  <Picker.Item label="نقاش" value="decorator" />
-                  <Picker.Item label="فني أجهزة منزلية" value="appliance-technician" />
+                  <Picker.Item label="نجار" value="carpenter" />   
                 </Picker>
               </View>
             </View>
@@ -388,7 +393,6 @@ export default function Register({ navigation }) {
               <Text className="text-gray-700 font-semibold mb-2">
                 المناطق *
               </Text>
-
               {/* Area 1 */}
               <View className="mb-3">
                 <Text className="text-gray-600 text-sm mb-1">
@@ -440,7 +444,62 @@ export default function Register({ navigation }) {
                 </View>
               </View>
             </View>
-          </View>
+
+
+  <View className="border-t border-gray-200 pt-6 mt-6">
+    <Text className="text-gray-700 font-semibold mb-2">
+      خدمة مميزة (اختياري)
+    </Text>
+    <Text className="text-gray-500 text-sm mb-4">
+      أضف خدمة خاصة بك
+    </Text>
+
+    {/* Service Name */}
+    <View className="mb-3">
+      <View className="flex-row items-center bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
+        <Ionicons name="construct-outline" size={20} color="#6b7280" />
+        <TextInput
+          className="flex-1 mr-2 text-gray-700 text-right"
+          placeholder="اسم الخدمة"
+          value={specialName}
+          onChangeText={setSpecialName}
+          editable={!loading}
+        />
+      </View>
+    </View>
+
+    {/* Description */}
+    <View className="mb-3">
+      <View className="flex-row items-start bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
+        <Ionicons name="document-text-outline" size={20} color="#6b7280" />
+        <TextInput
+          className="flex-1 mr-2 text-gray-700 text-right"
+          placeholder="وصف الخدمة"
+          value={specialDesc}
+          onChangeText={setSpecialDesc}
+          multiline
+          numberOfLines={3}
+          editable={!loading}
+        />
+      </View>
+    </View>
+
+    {/* Price */}
+    <View>
+      <View className="flex-row items-center bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
+        <Ionicons name="cash-outline" size={20} color="#6b7280" />
+        <TextInput
+          className="flex-1 mr-2 text-gray-700 text-right"
+          placeholder="السعر (بالجنيه)"
+          value={specialPrice}
+          onChangeText={setSpecialPrice}
+          keyboardType="numeric"
+          editable={!loading}
+        />
+      </View>
+    </View>
+  </View>
+            </View>
         )}
 
         {/* Register Button */}
@@ -477,6 +536,7 @@ export default function Register({ navigation }) {
           </Text>
         </TouchableOpacity>
       </View>
+      
     </ScrollView>
   );
 }

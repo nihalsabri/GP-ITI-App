@@ -64,6 +64,10 @@ export const registerUser = async (userData) => {
       profile.phone = phone || '';
       profile.address = address || '';
       
+  if (userData.specialService) {
+    profile.specialService = userData.specialService;
+  }
+
       await set(ref(database, `Tradespeople/${uid}`), profile);
     } else {
       throw new Error('نوع الحساب غير صالح');

@@ -15,6 +15,7 @@ import Profile from '../screens/Profile';
 import TechnicianDashboard from '../screens/Dashboard';
 import LoadingScreen from '../components/LoadingScreen';
 import CheckoutScreen from '../screens/Checkout';
+import { SafeAreaView } from 'react-native-safe-area-context';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -204,17 +205,16 @@ export default function MainNavigator() {
   }
 
   return (
+    <SafeAreaView style={{ flex: 1 }}>
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!isAuthenticated ? (
-        // ❌ غير مسجل - عرض شاشة تسجيل الدخول
         <Stack.Screen name="Auth" component={AuthStack} />
       ) : role === 'tradesperson' ? (
-        // 🔧 فني مسجل - عرض Dashboard
         <Stack.Screen name="MainApp" component={TechnicianTabs} />
       ) : (
-        // 👤 عميل مسجل - عرض الصفحة الرئيسية
         <Stack.Screen name="MainApp" component={ClientTabs} />
       )}
     </Stack.Navigator>
+</SafeAreaView>
   );
 }
