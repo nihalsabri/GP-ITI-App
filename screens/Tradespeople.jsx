@@ -59,7 +59,8 @@ const Tradespeople = () => {
       <View className="flex-row items-center gap-4">
         {/* Image */}
         <View className="h-20 w-20 overflow-hidden rounded-xl bg-gray-200">
-          {item.imageUrl ? (
+          {item.imageUrl && typeof item.imageUrl === 'string' && item.imageUrl.trim() !== '' ? (
+
             <Image source={{ uri: item.imageUrl }} className="h-full w-full" />
           ) : (
             <View className="flex-1 items-center justify-center">
