@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,227 +11,358 @@ import {
   Alert,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout, setUser } from '../store/appSlice';
-import { clearOrder } from '../store/orderSlice';
-import { setAuth } from '../store/authSlice';
-import { signOut } from 'firebase/auth';
-import { auth, database } from '../services/firebaseConfig';
+import { updateUser } from '../store/appSlice';
+import { database } from '../services/firebaseConfig';
 import { ref, update } from 'firebase/database';
+import { useAuth } from '../hooks/AuthProvider';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Profile({ navigation }) {
   const dispatch = useDispatch();
+  const { logout } = useAuth();
 
   const user = useSelector((state) => state.app.user);
   const role = useSelector((state) => state.app.role);
+  const isAuthenticated = useSelector((state) => state.app.isAuthenticated);
+  const isLoading = useSelector((state) => state.app.isLoading);
 
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
 
-  /* ---------- editable fields ---------- */
-  const [name, setName] = useState(user?.name || '');
-  const [phone, setPhone] = useState(user?.phone || '');
-  const [address, setAddress] = useState(user?.address || '');
-  const [imageUrl, setImageUrl] = useState(user?.imageUrl || user?.profilePic || '');
+  // حقول قابلة للتعديل - مع قيم افتراضية
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
 
-  /* ================= SAFE GUARD ================= */
-  if (!user) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-        <Text style={{ marginTop: 10 }}>Loading profile...</Text>
-      </View>
-    );
-  }
+  // تحميل البيانات عند تغيير المستخدم
+  useEffect(() => {
+    
+    if (user) {
+      // استخدام البيانات من Redux مع قيم افتراضية
+      setName(user?.name || user?.displayName || user?.email?.split('@')[0] || 'مستخدم');
+      setPhone(user?.phone || '');
+      setAddress(user?.address || '');
+      setImageUrl(user?.profilePic || user?.imageUrl || '');
+      setProfileLoading(false);
+    } else {
+      // إذا لم يكن هناك مستخدم، إظهار حالة التحميل
+      setProfileLoading(false);
+    }
+  }, [user]);
 
-  /* ================= LOGOUT ================= */
+  /* ================= تسجيل الخروج ================= */
   const handleLogout = async () => {
-    await signOut(auth);
-
-    dispatch(logout());
-    dispatch(clearOrder());
-    dispatch(setAuth({ token: null, role: null }));
-
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Login' }],
-    });
+    Alert.alert(
+      'تسجيل الخروج',
+      'هل أنت متأكد من تسجيل الخروج؟',
+      [
+        {
+          text: 'إلغاء',
+          style: 'cancel',
+        },
+        {
+          text: 'تسجيل الخروج',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              Alert.alert('نجاح', 'تم تسجيل الخروج بنجاح');
+            } catch (error) {
+              console.error(' خطأ في تسجيل الخروج:', error);
+              Alert.alert('خطأ', 'حدث خطأ أثناء تسجيل الخروج');
+            }
+          },
+        },
+      ]
+    );
   };
 
-  /* ================= SAVE PROFILE ================= */
+  /* ================= حفظ الملف الشخصي ================= */
   const handleSaveProfile = async () => {
-    if (!name) {
-      Alert.alert('Error', 'Name is required');
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      Alert.alert('خطأ', 'الاسم مطلوب');
+      return;
+    }
+
+    if (!user?.uid) {
+      Alert.alert('خطأ', 'لا يوجد مستخدم مسجل');
       return;
     }
 
     try {
       setSaving(true);
 
-      const path = role === 'client' ? `clients/${user.id}` : `Tradespeople/${user.id}`;
+      const path = role === 'client' ? `clients/${user.uid}` : `Tradespeople/${user.uid}`;
 
-      const updatedData =
-        role === 'client'
-          ? {
-              name,
-              phone,
-              address,
-              profilePic: imageUrl,
-            }
-          : {
-              name,
-              profilePic: imageUrl,
-            };
+      const updatedData = {
+        name: trimmedName,
+        displayName: trimmedName,
+        profilePic: imageUrl.trim() || null,
+        updatedAt: new Date().toISOString(),
+        ...(role === 'client' && {
+          phone: phone.trim() || null,
+          address: address.trim() || null,
+        }),
+      };
 
       await update(ref(database, path), updatedData);
 
-      // update redux
-      dispatch(
-        setUser({
-          ...user,
-          ...updatedData,
-        })
-      );
+      // تحديث Redux
+      dispatch(updateUser(updatedData));
 
       setEditOpen(false);
-      Alert.alert('Success', 'Profile updated successfully');
+      Alert.alert('نجاح', 'تم تحديث الملف الشخصي بنجاح');
     } catch (err) {
-      console.error(err);
-      Alert.alert('Error', 'Failed to update profile');
+      console.error(' خطأ في تحديث الملف الشخصي:', err);
+      Alert.alert('خطأ', 'فشل تحديث الملف الشخصي');
     } finally {
       setSaving(false);
     }
   };
 
-  /* ================= UI ================= */
+  /* ================= إذا كان التحميل جارياً ================= */
+  if (isLoading || profileLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#4f46e5" />
+          <Text className="mt-4 text-gray-600 text-lg">جاري تحميل البيانات...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  /* ================= إذا لم يكن هناك مستخدم أو لم يتم المصادقة ================= */
+  if (!isAuthenticated || !user) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="flex-1 justify-center items-center px-6">
+          <View className="bg-gray-100 w-24 h-24 rounded-full items-center justify-center mb-6">
+            <Text className="text-4xl text-gray-400">👤</Text>
+          </View>
+          <Text className="text-2xl font-bold text-gray-800 mb-4 text-center">
+            لم يتم تسجيل الدخول
+          </Text>
+          <Text className="text-gray-600 text-center mb-8">
+            يرجى تسجيل الدخول للوصول إلى الملف الشخصي
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Login')}
+            className="bg-primary px-8 py-4 rounded-xl"
+          >
+            <Text className="text-white font-bold text-lg">تسجيل الدخول</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  /* ================= الواجهة الرئيسية ================= */
   return (
-    <>
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Text style={{ fontSize: 28, fontWeight: 'bold', marginBottom: 16 }}>Profile</Text>
+    <SafeAreaView className="flex-1 bg-white">
+      <ScrollView className="flex-1">
+        <View className="p-6">
+          {/* العنوان */}
+          <Text className="text-3xl font-bold text-gray-800 mb-8 text-center">
+            الملف الشخصي
+          </Text>
 
-        {/* IMAGE */}
-        {user.profilePic || user.imageUrl ? (
-          <Image
-            source={{ uri: user.profilePic || user.imageUrl }}
-            style={{
-              width: 120,
-              height: 120,
-              borderRadius: 60,
-              marginBottom: 16,
-              alignSelf: 'center',
-            }}
-          />
-        ) : null}
+          {/* صورة الملف الشخصي */}
+          <View className="items-center mb-8">
+            {imageUrl ? (
+              <Image
+                source={{ uri: imageUrl }}
+                className="w-32 h-32 rounded-full border-4 border-primary"
+                onError={() => setImageUrl('')}
+              />
+            ) : (
+              <View className="w-32 h-32 rounded-full bg-gray-200 border-4 border-gray-300 items-center justify-center">
+                <Text className="text-5xl text-gray-400">👤</Text>
+              </View>
+            )}
+            <TouchableOpacity
+              onPress={() => setEditOpen(true)}
+              className="mt-4 bg-primary px-6 py-2 rounded-lg"
+            >
+              <Text className="text-white font-semibold">تغيير الصورة</Text>
+            </TouchableOpacity>
+          </View>
 
-        <Text>Name: {user.name || '—'}</Text>
-        <Text>Email: {user.email}</Text>
-        <Text>Role: {role}</Text>
+          {/* معلومات الملف الشخصي */}
+          <View className="bg-gray-50 rounded-2xl p-6 mb-6">
+            <View className="mb-4">
+              <Text className="text-gray-500 text-sm mb-1">الاسم</Text>
+              <Text className="text-xl font-bold text-gray-800">
+                {name || 'غير محدد'}
+              </Text>
+            </View>
 
-        {role === 'client' && (
-          <>
-            <Text>Phone: {user.phone || '—'}</Text>
-            <Text>Address: {user.address || '—'}</Text>
-          </>
-        )}
+            <View className="mb-4">
+              <Text className="text-gray-500 text-sm mb-1">البريد الإلكتروني</Text>
+              <Text className="text-lg text-gray-800">
+                {user?.email || 'غير محدد'}
+              </Text>
+            </View>
 
-        {role === 'tradesperson' && (
-          <>
-            <Text>Trade: {user.trade || '—'}</Text>
-            {Array.isArray(user.areas) && (
-              <View style={{ marginTop: 10 }}>
-                <Text style={{ fontWeight: '600' }}>Areas:</Text>
-                {user.areas.map((a, i) => (
-                  <Text key={i}>• {a}</Text>
+            <View className="mb-4">
+              <Text className="text-gray-500 text-sm mb-1">الدور</Text>
+              <Text className="text-lg font-semibold text-primary">
+                {role === 'client' ? 'عميل' : 'فني'}
+              </Text>
+            </View>
+
+            {role === 'client' && (
+              <>
+                <View className="mb-4">
+                  <Text className="text-gray-500 text-sm mb-1">رقم الهاتف</Text>
+                  <Text className="text-lg text-gray-800">
+                    {phone || 'غير محدد'}
+                  </Text>
+                </View>
+
+                <View>
+                  <Text className="text-gray-500 text-sm mb-1">العنوان</Text>
+                  <Text className="text-lg text-gray-800">
+                    {address || 'غير محدد'}
+                  </Text>
+                </View>
+              </>
+            )}
+
+            {role === 'tradesperson' && user?.trade && (
+              <View className="mb-4">
+                <Text className="text-gray-500 text-sm mb-1">التخصص</Text>
+                <Text className="text-lg font-semibold text-gray-800">
+                  {user.trade}
+                </Text>
+              </View>
+            )}
+
+            {role === 'tradesperson' && user?.areas?.length > 0 && (
+              <View>
+                <Text className="text-gray-500 text-sm mb-1">المناطق</Text>
+                {user.areas.map((area, index) => (
+                  <Text key={index} className="text-lg text-gray-800">
+                    • {area}
+                  </Text>
                 ))}
               </View>
             )}
-          </>
-        )}
+          </View>
 
-        {/* EDIT BUTTON */}
-        <TouchableOpacity
-          onPress={() => setEditOpen(true)}
-          style={{
-            marginTop: 20,
-            backgroundColor: '#4f46e5',
-            padding: 14,
-            borderRadius: 12,
-          }}>
-          <Text style={{ color: '#fff', textAlign: 'center', fontSize: 16 }}>Edit Profile</Text>
-        </TouchableOpacity>
+          {/* أزرار التحكم */}
+          <View className="space-y-4">
+            <TouchableOpacity
+              onPress={() => setEditOpen(true)}
+              className="bg-primary py-4 rounded-xl"
+            >
+              <Text className="text-white text-center font-bold text-lg">
+                تعديل الملف الشخصي
+              </Text>
+            </TouchableOpacity>
 
-        {/* LOGOUT */}
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={{
-            marginTop: 20,
-            backgroundColor: '#ef4444',
-            padding: 16,
-            borderRadius: 12,
-          }}>
-          <Text style={{ color: 'white', textAlign: 'center', fontSize: 16 }}>Logout</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleLogout}
+              className="bg-red-500 py-4 rounded-xl"
+            >
+              <Text className="text-white text-center font-bold text-lg">
+                تسجيل الخروج
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
 
-      {/* ================= EDIT MODAL ================= */}
+      {/* ================= نافذة التعديل ================= */}
       <Modal visible={editOpen} animationType="slide">
-        <ScrollView contentContainerStyle={{ padding: 20 }}>
-          <Text style={{ fontSize: 26, fontWeight: 'bold', marginBottom: 20 }}>Edit Profile</Text>
+        <SafeAreaView className="flex-1 bg-white">
+          <ScrollView className="p-6">
+            <View className="flex-row justify-between items-center mb-8">
+              <Text className="text-2xl font-bold text-gray-800">تعديل الملف الشخصي</Text>
+              <TouchableOpacity onPress={() => setEditOpen(false)}>
+                <Text className="text-2xl text-gray-500">✕</Text>
+              </TouchableOpacity>
+            </View>
 
-          <TextInput value={name} onChangeText={setName} placeholder="Name" style={inputStyle} />
+            <View className="space-y-4">
+              <View>
+                <Text className="text-gray-700 font-semibold mb-2">الاسم الكامل *</Text>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="أدخل اسمك الكامل"
+                  className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-300 text-right"
+                />
+              </View>
 
-          <TextInput
-            value={imageUrl}
-            onChangeText={setImageUrl}
-            placeholder="Profile image URL"
-            style={inputStyle}
-          />
+              <View>
+                <Text className="text-gray-700 font-semibold mb-2">رابط صورة الملف الشخصي</Text>
+                <TextInput
+                  value={imageUrl}
+                  onChangeText={setImageUrl}
+                  placeholder="https://example.com/photo.jpg"
+                  className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-300 text-right"
+                />
+              </View>
 
-          {role === 'client' && (
-            <>
-              <TextInput
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="Phone"
-                style={inputStyle}
-              />
-              <TextInput
-                value={address}
-                onChangeText={setAddress}
-                placeholder="Address"
-                style={inputStyle}
-              />
-            </>
-          )}
+              {role === 'client' && (
+                <>
+                  <View>
+                    <Text className="text-gray-700 font-semibold mb-2">رقم الهاتف</Text>
+                    <TextInput
+                      value={phone}
+                      onChangeText={setPhone}
+                      placeholder="012XXXXXXXX"
+                      className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-300 text-right"
+                      keyboardType="phone-pad"
+                    />
+                  </View>
 
-          <TouchableOpacity
-            onPress={handleSaveProfile}
-            disabled={saving}
-            style={{
-              backgroundColor: '#4f46e5',
-              padding: 16,
-              borderRadius: 12,
-              marginTop: 10,
-              opacity: saving ? 0.6 : 1,
-            }}>
-            <Text style={{ color: '#fff', textAlign: 'center', fontSize: 16 }}>
-              {saving ? 'Saving...' : 'Save Changes'}
-            </Text>
-          </TouchableOpacity>
+                  <View>
+                    <Text className="text-gray-700 font-semibold mb-2">العنوان</Text>
+                    <TextInput
+                      value={address}
+                      onChangeText={setAddress}
+                      placeholder="أدخل عنوانك"
+                      className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-300 text-right h-24"
+                      multiline
+                      textAlignVertical="top"
+                    />
+                  </View>
+                </>
+              )}
+            </View>
 
-          <TouchableOpacity onPress={() => setEditOpen(false)} style={{ marginTop: 16 }}>
-            <Text style={{ textAlign: 'center', color: '#ef4444' }}>Cancel</Text>
-          </TouchableOpacity>
-        </ScrollView>
+            <View className="mt-8 space-y-4">
+              <TouchableOpacity
+                onPress={handleSaveProfile}
+                disabled={saving}
+                className={`bg-primary py-4 rounded-xl ${saving ? 'opacity-70' : ''}`}
+              >
+                {saving ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text className="text-white text-center font-bold text-lg">
+                    حفظ التغييرات
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setEditOpen(false)}
+                className="bg-gray-200 py-4 rounded-xl"
+              >
+                <Text className="text-gray-700 text-center font-bold text-lg">
+                  إلغاء
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
       </Modal>
-    </>
+    </SafeAreaView>
   );
 }
-
-/* ---------- styles ---------- */
-const inputStyle = {
-  borderWidth: 1,
-  borderColor: '#d1d5db',
-  borderRadius: 12,
-  padding: 14,
-  marginBottom: 12,
-};

@@ -1,39 +1,89 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  user: null, // بيانات المستخدم (client أو tradesperson)
-  role: null, // "client" | "tradesperson"
+  user: null,
+  role: null,
   isAuthenticated: false,
+  isLoading: true,
 };
 
 const appSlice = createSlice({
   name: 'app',
   initialState,
   reducers: {
-    // يستخدم عند تسجيل الدخول
+    // ==========================================
+    // تسجيل دخول ناجح
+
     loginSuccess: (state, action) => {
-      state.user = action.payload.user;
-      state.role = action.payload.role;
+      state.user = action.payload.user || null;
+      state.role = action.payload.role || 'client';
       state.isAuthenticated = true;
+      state.isLoading = false;
+      
     },
 
-    // 👈 مهم جدًا (عشان Login.jsx)
+    // ==========================================
+    // تحديث بيانات المستخدم
+
     setUser: (state, action) => {
-      state.user = action.payload;
+      state.user = action.payload || null;
+      state.isLoading = false;
     },
+
+    // ==========================================
+    // تحديث الدور
 
     setRole: (state, action) => {
       state.role = action.payload;
     },
 
+    // ==========================================
+    // تحديث حالة المصادقة
+
     setAuthenticated: (state, action) => {
       state.isAuthenticated = action.payload;
     },
 
-    logout: () => initialState,
+    // ==========================================
+    // تحديث حالة التحميل
+
+    setLoading: (state, action) => {
+      state.isLoading = action.payload;
+    },
+
+    // ==========================================
+    // تسجيل خروج
+
+    logout: (state) => {
+      state.user = null;
+      state.role = null;
+      state.isAuthenticated = false;
+      state.isLoading = false;
+      
+    },
+
+    // ==========================================
+    // تحديث جزئي لبيانات المستخدم
+
+    updateUser: (state, action) => {
+      if (state.user && action.payload) {
+        state.user = {
+          ...state.user,
+          ...action.payload,
+        };
+      }
+    },
   },
 });
 
-export const { loginSuccess, setUser, setRole, setAuthenticated, logout } = appSlice.actions;
+export const {
+  loginSuccess,
+  setUser,
+  setRole,
+  setAuthenticated,
+  setLoading,
+  logout,
+  updateUser,
+} = appSlice.actions;
 
 export default appSlice.reducer;
