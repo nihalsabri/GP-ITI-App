@@ -19,6 +19,8 @@ import Login from './screens/Login';
 import Register from './screens/Register';
 import Profile from './screens/Profile';
 import Dashboard from './screens/Dashboard';
+import CheckoutScreen from 'screens/Checkout';
+import { StripeProvider } from '@stripe/stripe-react-native';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -31,6 +33,7 @@ function HomeStack() {
       <Stack.Screen name="About" component={About} />
       <Stack.Screen name="Tradespeople" component={Tradespeople} />
       <Stack.Screen name="Tradesperson" component={Tradesperson} />
+  
     </Stack.Navigator>
   );
 }
@@ -74,7 +77,7 @@ function TabNavigator() {
           if (route.name === 'DashboardTab') icon = 'speedometer-outline';
           if (route.name === 'ProfileTab') icon = 'person-outline';
           if (route.name === 'ContactTab') icon = 'call-outline';
-
+if (route.name === 'CartTab') icon = 'cart-outline';
           return <Ionicons name={icon} size={size} color={color} />;
         },
       })}>
@@ -104,6 +107,17 @@ function TabNavigator() {
 
       {/* CONTACT */}
       <Tab.Screen name="ContactTab" component={Contact} options={{ tabBarLabel: 'Contact' }} />
+
+      <Tab.Screen 
+  name="CartTab" 
+  component={CheckoutScreen} 
+  options={{ 
+    tabBarLabel: 'Cart',
+    tabBarIcon: ({ color, size }) => (
+      <Ionicons name="cart-outline" size={size} color={color} />
+    ),
+  }} 
+/>
     </Tab.Navigator>
   );
 }
@@ -112,11 +126,13 @@ function TabNavigator() {
 export default function App() {
   return (
     <Provider store={store}>
+      <StripeProvider publishableKey="pk_test_51ShLlXQ8ZGyN4bjshA3QIVvPVm9OdjZesEoWn3LCi4oNsHZrumC7nX8yrMpqB5ivPRtf90wOJVOBR6dkjG9fQGQ1003rZ0iLG4">
       <CartProvider>
         <NavigationContainer>
           <TabNavigator />
         </NavigationContainer>
       </CartProvider>
+     </StripeProvider>
     </Provider>
   );
 }

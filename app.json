@@ -12,7 +12,13 @@
       "tsconfigPaths": true
     },
 
-    "plugins": [],
+    "plugins":[ ["@stripe/stripe-react-native",
+  
+  {
+      "merchantIdentifier": "",
+      "enableApplePay": false
+    }
+  ]],
 
     "orientation": "portrait",
     "icon": "./assets/building.png",
