@@ -42,13 +42,13 @@ const Tradesperson = () => {
         const snap = await get(ref(database, `Tradespeople/${id}`));
         if (snap.exists()) {
           const data = snap.val();
-          setPerson({ id, ...data });
+          setPerson({ id: snap.key, ...data }); 
           setRating(data.rating || 0);
 
           // save in redux order slice
           dispatch(
             setTradesperson({
-              id,
+              id: person.id, 
               name: data.name,
               trade: data.trade,
             })
