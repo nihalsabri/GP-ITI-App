@@ -20,6 +20,8 @@ export const fetchTechnicianOrders = createAsyncThunk(
 
       // جلب كل الطلبات من Firebase
       const ordersRef = ref(database, 'orders');
+            // const ordersRef = ref(database, `Tradespeople/${tradespersonId}/orders`);
+
       const snapshot = await get(ordersRef);
 
       if (!snapshot.exists()) {
@@ -37,11 +39,12 @@ export const fetchTechnicianOrders = createAsyncThunk(
             orderId: firebaseKey,
             internalId: order.id ? String(order.id) : firebaseKey,
             ...order,
-            tradespersonid: order.tradespersonid || order.tradespersonId || '',
+            // tradespersonid: order.tradespersonid || order.tradespersonId || '',
             status: order.status || '',
             serviceType: order.serviceType || '',
             date: order.date || '',
             createdAt: order.createdAt || '',
+            tradespersonid: order.tradespersonid || order.tradespersonId || order.technicianId || '',
           };
 
           //  إذا كان clientId موجوداً، تأكده من أنه نص
@@ -52,9 +55,12 @@ export const fetchTechnicianOrders = createAsyncThunk(
           return processedOrder;
         })
      .filter((order) => {
-  const isMatch = (order.tradespersonid === tradespersonId) || 
-                  (order.technicianId === tradespersonId); 
-  return isMatch;
+  // const isMatch = (order.tradespersonid === tradespersonId) 
+  // const isMatch = order.tradespersonId === tradespersonId || order.tradespersonid === tradespersonId;
+  // const isMatch = (order.tradespersonId || order.tradespersonid || order.technicianId) === tradespersonId;
+  // return isMatch;
+  const orderTechId = order.tradespersonId || order.tradespersonid || order.technicianId;
+          return orderTechId === tradespersonId;
 });
 
       return technicianOrders;

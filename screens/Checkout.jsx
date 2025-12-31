@@ -60,7 +60,7 @@ const CheckoutForm = () => {
         return;
       }
 
-    
+    const orderId = Date.now().toString();
       const { error } = await presentPaymentSheet();
 const orderData = {
    id: orderId, 
@@ -68,7 +68,7 @@ const orderData = {
     clientName: user.name || user.displayName,
     clientPhone: user.phone,
     clientAddress: user.address,
-    technicianId: tradesperson.id,
+tradespersonId: tradesperson.id,
       tradespersonid: tradesperson.id, 
     technicianName: tradesperson.name,
      services: services,
@@ -78,7 +78,6 @@ const orderData = {
     status: 'pending',
     createdAt: new Date().toISOString(),
   };
-  const orderId = Date.now();
 
       if (error) {
         Alert.alert('Payment Failed', error.message);

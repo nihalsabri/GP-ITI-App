@@ -20,24 +20,44 @@ const Tradespeople = () => {
 
   /* ================= FETCH TRADESPEOPLE ================= */
   useEffect(() => {
-    const fetchTradespeople = async () => {
-      try {
-        const snapshot = await get(ref(database, 'Tradespeople'));
+    // const fetchTradespeople = async () => {
+    //   try {
+    //     const snapshot = await get(ref(database, 'Tradespeople'));
 
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          const list = Object.values(data);
-          setTradespeople(list);
-        } else {
-          setTradespeople([]);
-        }
-      } catch (err) {
-        console.error('Failed to fetch tradespeople', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    //     if (snapshot.exists()) {
+    //       const data = snapshot.val();
+    //       const list = Object.values(data);
+    //       setTradespeople(list);
+    //     } else {
+    //       setTradespeople([]);
+    //     }
+    //   } catch (err) {
+    //     console.error('Failed to fetch tradespeople', err);
+    //   } finally {
+    //     setLoading(false);
+    //   }
+    // };
+const fetchTradespeople = async () => {
+  try {
+    const snapshot = await get(ref(database, 'Tradespeople'));
 
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+   
+      const list = Object.entries(data).map(([id, person]) => ({
+        id, 
+        ...person
+      }));
+      setTradespeople(list);
+    } else {
+      setTradespeople([]);
+    }
+  } catch (err) {
+    console.error('Failed to fetch tradespeople', err);
+  } finally {
+    setLoading(false);
+  }
+};
     fetchTradespeople();
   }, []);
 

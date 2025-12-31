@@ -13,7 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { registerUser } from '../services/auth';
 import { useDispatch } from 'react-redux';
 import { loginSuccess } from '../store/appSlice';
-
+import { ref, update } from 'firebase/database';
+import { database } from '../services/firebaseConfig';
 export default function Register({ navigation }) {
   const dispatch = useDispatch();
 
@@ -120,30 +121,75 @@ const [specialPrice, setSpecialPrice] = useState('');
         role,
       };
 
-      // Add role-specific data
-      if (role === 'client') {
-        userData.phone = phone.trim();
-        userData.address = address.trim();
-      } else if (role === 'tradesperson') {
-        userData.trade = trade;
-        userData.areas = [area1.trim(), area2.trim(), area3.trim()].filter(Boolean);
-        userData.phone = phone.trim() || '';
-        userData.address = address.trim() || '';
+//       // Add role-specific data
+//       if (role === 'client') {
+//         userData.phone = phone.trim();
+//         userData.address = address.trim();
+//       } else if (role === 'tradesperson') {
+//         userData.trade = trade;
+//         userData.areas = [area1.trim(), area2.trim(), area3.trim()].filter(Boolean);
+//         userData.phone = phone.trim() || '';
+//         userData.address = address.trim() || '';
 
-         if (specialName.trim() && specialPrice) {
-    userData.specialService = {
-      id: `special-${Date.now()}`,
-      name: specialName.trim(),
-      description: specialDesc.trim(),
-      price: Number(specialPrice),
-    };
-      }
+//     //      if (specialName.trim() && specialPrice) {
+//     // userData.specialService = {
+//     //   id: `special-${Date.now()}`,
+//     //   name: specialName.trim(),
+//     //   description: specialDesc.trim(),
+//     //   price: Number(specialPrice),
+//     // };
+    
+
+// if (specialName.trim() && specialPrice) {
+//     userData.specialService = {
+//       id: `special-${Date.now()}`,
+//       name: specialName.trim(),
+//       description: specialDesc.trim(),
+//       price: Number(specialPrice),
+//     };
+  
+
+
+//       }
+//     }
+
+//       console.log('📤 Registering user:', userData.email);
+
+//       // Register user
+//       const result = await registerUser(userData);
+
+// Add role-specific data
+    if (role === 'client') {
+      userData.phone = phone.trim();
+      userData.address = address.trim();
+    } else if (role === 'tradesperson') {
+      userData.trade = trade;
+      userData.areas = [area1.trim(), area2.trim(), area3.trim()].filter(Boolean);
+      userData.phone = phone.trim() || '';
+      userData.address = address.trim() || '';
+
+      
     }
 
-      console.log('📤 Registering user:', userData.email);
+    console.log('📤 Registering user:', userData.email);
 
-      // Register user
-      const result = await registerUser(userData);
+    // Register user
+    const result = await registerUser(userData);
+
+  
+    if (result.success && role === 'tradesperson' && specialName.trim() && specialPrice) {
+      const specialServiceData = {
+        id: `special-${result.profile.id}`,  
+        name: specialName.trim(),
+        description: specialDesc.trim(),
+        price: Number(specialPrice),
+      };
+
+      // حفظ الخدمة المميزة في Firebase تحت الفني
+      await update(ref(database, `Tradespeople/${result.profile.id}`), {
+        specialService: specialServiceData,
+      });
+    }
 
       if (result.success) {
         // Save to Redux
